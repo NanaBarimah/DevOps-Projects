@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import argparse
+import os 
+import sys
+import tarfile
+from datetime import datetime
+
+def archive_logs(src_dir: str, dest_dir: str, log_file: str):
+    if not os.path.isdir(src_dir):
+        print(f"Source directory '{src_dir}' does not exist.")
+        sys.exit(1)
+
+    os.makedirs(dest_dir, exist_ok=True)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    archive_name = f"logs_archive_{timestamp}.tar.gz"
+    archive_path = os.path.join(dest_dir, archive_name)
+
+    # create a tar.gz archive
+    with tarfile.open(archive_path, "w:gz") as tar:
+        for entry in os.listdir(src_dir):
+            full_path = os.path.join(src_dir, entry)
+            tar.add(full_path, arcname=entry)
+
+    
+    # log the archive events 
+    with open(log_file, "a") as lf:
+        lf.write(f"{datetime.now().isoformat()} Archives '{src_dir}' → '{archive_path}'\n")
+
+    print(f"Created archive: {archive_path}")
+    print(f"Logged to: {log_file}")
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Compressed a directory of logs into tar.gz and record the action."
+    )
+    parser.add_argument("log_directory",
+        help="Path to the directory containing log files to archive.")
+    parser.add_argument("--output-dir", "-o",
+        default="./archives",
+        help="Directory where archives are stored (default: './archives').")
+    parser.add_argument("--log-file", "-l",
+        default="./archive.log",
+        help="File to record archive operations (default: './archive.log').")
+    
+    args = parser.parse_args()
+
+    archive_logs(args.log_directory, args.output_dir, args.log_file)
+
+if __name__ == "__main__":
+    main()
+
+
+                        
